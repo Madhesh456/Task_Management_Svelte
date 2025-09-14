@@ -14,49 +14,50 @@
   }
 
   // --- Initial State (Mock API Data) ---
-  const initialTasks: Task[] = [
-    {
-      id: '1',
-      title: 'Design Dashboard UI with a focus on a clean and modern user experience',
-      description: 'Create a clean and modern design for the task dashboard, including wireframes and mockups that are responsive on all devices. The design should be simple, intuitive, and easy to navigate for users of all skill levels. Pay special attention to color palettes and typography to create a visually appealing interface. It is important to create a comprehensive design system that will allow for easy scalability in the future. The design should also include mockups for both light and dark mode.',
-      status: 'In-Progress',
-      createdAt: new Date(Date.now() - 86400000).toLocaleDateString(),
-    },
-    {
-      id: '2',
-      title: 'Implement Task Creation and management functionality',
-      description: 'Develop the form and logic for adding new tasks to the list. This includes input validation, status selection, and a confirmation dialog. The implementation should be robust and handle potential errors gracefully. It is a good idea to consider both server-side and client-side validation to ensure data integrity. The task creation form should also be accessible to users with disabilities, following WCAG guidelines.',
-      status: 'Completed',
-      createdAt: new Date(Date.now() - 172800000).toLocaleDateString(),
-    },
-    {
-      id: '3',
-      title: 'Set up Project Environment and configure development tools',
-      description: 'Initialize the Svelte, TypeScript, and Tailwind CSS project using Vite or SvelteKit. Configure ESLint and Prettier for code quality and consistency. Set up a component-based architecture for reusability and maintainability across the entire application. It is important to document all the setup steps clearly in the project README.',
-      status: 'Completed',
-      createdAt: new Date(Date.now() - 259200000).toLocaleDateString(),
-    },
-    {
-      id: '4',
-      title: 'Add a comprehensive Search and Filter feature to the task list',
-      description: 'Implement functionality to search by title and description and filter by task status. This feature should be fast and responsive, providing immediate feedback to the user as they type or change the filter. The search algorithm should be efficient and case-insensitive. Consider adding a debounce function to the search input to prevent excessive re-renders.',
-      status: 'Pending',
-      createdAt: new Date().toLocaleDateString(),
-    },
-  ];
+const initialTasks: Task[] = [
+  {
+    id: '1',
+    title: 'Design a clean and modern dashboard user interface quickly',
+    description: 'Create a modern dashboard UI with responsive layouts. Focus on intuitive navigation, appealing color schemes, typography, and accessibility standards. Include wireframes, mockups, and a design system that supports scalability. Ensure the interface is visually appealing in both light and dark themes while maintaining consistency across components and devices.',
+    status: 'In-Progress',
+    createdAt: new Date(Date.now() - 86400000).toLocaleDateString(),
+  },
+  {
+    id: '2',
+    title: 'Implement task creation, editing, and management functionality effectively',
+    description: 'Develop forms and logic to allow adding, editing, and managing tasks. Include input validation, status selection, confirmation dialogs, and proper error handling. Ensure accessibility according to WCAG guidelines and provide a smooth, responsive user experience. Consider both client-side and server-side validation to maintain data integrity and reliability across devices and sessions.',
+    status: 'Completed',
+    createdAt: new Date(Date.now() - 172800000).toLocaleDateString(),
+  },
+  {
+    id: '3',
+    title: 'Set up project environment and configure development tools properly',
+    description: 'Initialize the Svelte, TypeScript, and Tailwind project using Vite or SvelteKit. Configure ESLint, Prettier, and code linting for quality. Set up reusable components and modular architecture. Document all setup steps clearly in the README. Ensure the project is ready for scalable development and maintainability while following best coding practices for consistency.',
+    status: 'Completed',
+    createdAt: new Date(Date.now() - 259200000).toLocaleDateString(),
+  },
+  {
+    id: '4',
+    title: 'Add a search and filter feature for tasks efficiently',
+    description: 'Implement functionality to search tasks by title or description and filter them by status. Ensure the feature is fast, responsive, and provides immediate feedback. Optimize the search algorithm for efficiency, add debouncing to input, and maintain case-insensitive matching. Include proper UX feedback, error handling, and responsiveness for desktop and mobile devices across the application.',
+    status: 'Pending',
+    createdAt: new Date().toLocaleDateString(),
+  },
+];
+
 
   // --- State Management ---
   const tasks = writable<Task[]>([]);
   const searchTerm = writable('');
   const filterStatus = writable<TaskStatus | 'All'>('All');
   const isDarkMode = writable(false);
-  let isContentLoading = true;
+  const isContentLoading = writable(true);
+  const isLoading = writable(false);
 
   // --- Component State ---
   let isEditModalOpen = false;
   let isDeleteModalOpen = false;
   let isAddModalOpen = false;
-  let isLoading = false;
   let currentTask: Task | null = null;
   let newTaskTitle = '';
   let newTaskDescription = '';
@@ -64,6 +65,19 @@
   let confirmMessage = '';
   let pendingTaskToDelete: Task | null = null;
   const MAX_CHARACTERS = 500;
+
+  // --- Reactive Dark Mode Fix ---
+  // This reactive statement applies the 'dark' class to the root <html> element,
+  // which is what Tailwind needs to apply the dark theme.
+  $: {
+    if (typeof document !== 'undefined') {
+      if ($isDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }
 
   // --- Truncation and Utility Functions ---
   function truncateText(text: string, maxWords: number): string {
@@ -91,22 +105,28 @@
         : filteredByStatus;
     }
   );
+  
 
   // --- Lifecycle Hooks ---
   onMount(() => {
     // Set initial dark mode based on system preference
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    $isDarkMode = mediaQuery.matches;
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme) {
+      isDarkMode.set(savedTheme === 'dark');
+    } else {
+      isDarkMode.set(systemPrefersDark);
+    }
 
     // Optional: Add a listener for system theme changes
-    mediaQuery.addEventListener('change', (e) => {
-      $isDarkMode = e.matches;
-    });
+ 
 
     // Simulate lazy loading of content
     setTimeout(() => {
       tasks.set(initialTasks);
-      isContentLoading = false;
+      isContentLoading.set(false);
     }, 1500); // Simulate network delay
   });
 
@@ -114,7 +134,7 @@
   async function addTask() {
     if (!newTaskTitle.trim() || newTaskDescription.length > MAX_CHARACTERS) return;
 
-    isLoading = true;
+    isLoading.set(true);
     await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call delay
 
     const newTask: Task = {
@@ -126,7 +146,7 @@
     };
     tasks.update(currentTasks => [...currentTasks, newTask]);
     
-    isLoading = false;
+    isLoading.set(false);
     isAddModalOpen = false;
     resetNewTaskForm();
   }
@@ -179,10 +199,6 @@
     confirmMessage = '';
   }
 
-  function toggleDarkMode() {
-    isDarkMode.update(dark => !dark);
-  }
-
   // --- Accessibility and Status Styling ---
   function getStatusStyle(status: TaskStatus) {
     switch (status) {
@@ -208,37 +224,30 @@
 </script>
 
 <svelte:head>
-  <!-- Basic SEO Meta Tags -->
   <meta name="description" content="A modern and responsive task management dashboard built with Svelte and Tailwind CSS. Create, edit, and filter your tasks efficiently.">
   <meta name="keywords" content="Svelte, Tailwind CSS, Task Management, Dashboard, Frontend, Web Development">
   <meta name="author" content="Your Name">
 
-  <!-- Load Inter font from Google Fonts -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-  <!-- Load Tailwind CSS from CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    if (typeof tailwind !== 'undefined') {
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-            },
+ <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
           },
         },
-      };
-    }
+      },
+    };
   </script>
 </svelte:head>
 
-<!-- --- Main Application Layout --- -->
-<main class="font-sans min-h-screen transition-colors duration-300" class:dark={$isDarkMode} style="background-color: {$isDarkMode ? '#1a202c' : '#f7fafc'};">
+<main class="font-sans min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900">
 
-  {#if isContentLoading}
-    <!-- Full-page Skeleton Loader -->
-    <header class="sticky top-0 z-10 w-full bg-gray-100 dark:bg-gray-800 shadow-xl transition-colors duration-300 animate-pulse">
+  {#if $isContentLoading}
+    <header class="sticky top-0 z-10 w-full bg-white dark:bg-gray-800 shadow-xl transition-colors duration-300 animate-pulse">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="h-10 w-48 bg-gray-300 dark:bg-gray-700 rounded-lg"></div>
         <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
@@ -281,10 +290,10 @@
       </div>
     </div>
   {:else}
-    <!-- Header and Controls (Sticky) -->
     <header class="sticky top-0 z-10 w-full bg-white dark:bg-gray-800 shadow-xl transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">Task Dashboard</h1>
+        <h3W class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">Task
+Management Dashboard</h3W>
         <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
           <label for="search" class="sr-only">Search</label>
           <input
@@ -294,7 +303,6 @@
             placeholder="Search tasks..."
             class="w-full md:w-64 px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
           >
-          <!-- Refreshed "Add New Task" button -->
           <button
             on:click={() => isAddModalOpen = true}
             class="w-full px-6 py-3 text-sm font-medium text-white rounded-full shadow-lg hover:shadow-xl active:scale-95 transform transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-purple-300 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center gap-2"
@@ -304,19 +312,20 @@
             </svg>
             Add New Task
           </button>
-          <!-- Themed dark mode toggle button -->
-          <label for="dark-mode-toggle" class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-            <input type="checkbox" id="dark-mode-toggle" class="sr-only peer" checked={$isDarkMode} on:change={toggleDarkMode}>
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Dark Mode</span>
-          </label>
-        </div>
+         <label for="dark-mode-toggle" class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+  <input
+    type="checkbox"
+    id="dark-mode-toggle"
+    class="sr-only peer"
+    bind:checked={$isDarkMode}
+  >
+  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+  <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Dark Mode</span>
+</label>
       </div>
     </header>
 
-    <!-- Main content area -->
     <div class="max-w-7xl mx-auto p-4 sm:p-8 pt-6 sm:pt-10">
-      <!-- Filter Buttons -->
       <div class="mt-6 flex flex-wrap gap-2 justify-center">
         {#each ['All', 'Pending', 'In-Progress', 'Completed'] as status}
           <button
@@ -335,7 +344,6 @@
         {/each}
       </div>
 
-      <!-- Task List -->
       <div class="mt-8 grid gap-6 sm:grid-cols-1 lg:grid-cols-2">
         {#if $filteredTasks.length === 0}
           <p class="text-center text-gray-500 dark:text-gray-400 col-span-full py-10">No tasks found matching your criteria.</p>
@@ -380,9 +388,7 @@
     </div>
   {/if}
 
-  <!-- --- Modals --- -->
   {#if isAddModalOpen}
-    <!-- Add Task Modal -->
     <div
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       aria-modal="true"
@@ -438,9 +444,9 @@
               <button
                 type="submit"
                 class="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                disabled={isLoading || newTaskDescription.length > MAX_CHARACTERS}
+                disabled={$isLoading || newTaskDescription.length > MAX_CHARACTERS}
               >
-                {#if isLoading}
+                {#if $isLoading}
                   Adding...
                 {:else}
                   Add Task
@@ -454,7 +460,6 @@
   {/if}
   
   {#if isEditModalOpen}
-    <!-- Edit Modal -->
     <div
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       aria-modal="true"
@@ -522,7 +527,6 @@
   {/if}
 
   {#if isDeleteModalOpen}
-    <!-- Delete Confirmation Modal -->
     <div
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       aria-modal="true"
@@ -552,8 +556,7 @@
     </div>
   {/if}
 
-  {#if isLoading}
-    <!-- Loader Overlay -->
+  {#if $isLoading}
     <div class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
       <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
     </div>

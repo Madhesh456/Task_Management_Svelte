@@ -1,50 +1,56 @@
-Svelte Task Management Dashboard
-This is a modern and responsive single-page application built with Svelte and Tailwind CSS. It provides a clean, intuitive interface for managing tasks with a focus on a smooth user experience. The application includes a theme toggle for light and dark modes, a responsive design, and a skeleton loader to enhance the perceived performance.
+Project Summary
 
-Features
-Task Management: Create, edit, and delete tasks with a simple and clear interface.
+Name: Svelte Task Management Dashboard
 
-Task Details: Each task has a title, description, and status.
+Description:
+A modern, responsive single-page application built with Svelte and Tailwind CSS, focused on managing tasks efficiently. Users can create, edit, and delete tasks, filter and search them, and toggle between light/dark themes. Includes skeleton loaders for a polished user experience.
 
-Filtering & Search: Quickly filter tasks by their status (Pending, In-Progress, Completed) and search for tasks by title or description.
+Key Features:
 
-Responsive Design: The dashboard adapts seamlessly to desktop, tablet, and mobile screens.
+Task Management: Add, edit, delete tasks.
 
-Theme Toggle: A one-click toggle to switch between a vibrant light mode and a sleek dark mode.
+Task Details: Each task has a title, description, status.
 
-Skeleton Loader: A full-page skeleton loader is displayed while content is being loaded to provide a professional, polished user experience.
+Filtering & Search: Filter tasks by status and search by title/description.
 
-Technologies Used
-Svelte: A reactive JavaScript framework that compiles into highly efficient code.
+Responsive Design: Works seamlessly on desktop, tablet, and mobile.
 
-TypeScript: Used for strong typing to improve code quality and maintainability.
+Theme Toggle: Switch between light and dark modes.
 
-Tailwind CSS: A utility-first CSS framework for rapid and consistent styling.
+Skeleton Loader: Displayed while content loads for smooth UX.
 
-Firebase: A platform used for hosting the static site.
+Technologies Used:
 
-How to Run This Project
-This project uses a static JSON array to simulate a backend, making it easy to get up and running quickly.
+Svelte – Reactive frontend framework.
 
-Prerequisites
-You will need Node.js and npm (or yarn) installed on your machine.
+TypeScript – Strong typing for maintainable code.
 
-Installation
-Clone this repository to your local machine:
+Tailwind CSS – Utility-first CSS for rapid styling.
 
-git clone [https://github.com/your-username/your-repository-name.git](https://github.com/your-username/your-repository-name.git)
+Firebase – Hosting platform for static site deployment.
 
-Navigate to the project directory:
+Installation & Running Locally
 
-cd your-repository-name
+Prerequisites: Node.js and npm (or yarn).
 
-Install the dependencies:
+Steps:
+
+Clone the repository:
+
+git clone https://github.com/Madhesh456/Task_Management_Svelte.git
+
+Navigate to the project folder:
+
+cd Task_Management_Svelte
+
+Install dependencies:
 
 npm install
 
-Development
-To start the development server and see the dashboard in your browser:
+Start the development server:
 
 npm run dev
 
-The application will be available at http://localhost:5173
+Open in browser: http://localhost:5173
+
+Live Preview : https://task-management-svelte.web.app/
